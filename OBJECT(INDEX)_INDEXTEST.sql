@@ -1,4 +1,4 @@
---Procedural Language extension to SQL
+
 -- PK 제약조건이없음
 SELECT * FROM USER_MOCK_DATA;
 SELECT COUNT(*)FROM USER_MOCK_DATA;
@@ -42,7 +42,7 @@ WHERE FIRST_NAME LIKE 'R%'; --OPTION RANGE SCAN CARDINALITY 25918 63
     1)WHERE 절에 인덱스 컬럼을 사용시 훨씬 빠르게 연산 가능하다.
     2)ORDER BY 연산을 사용할 필요가 없음(이미 정렬이 되어있다.)
         참고) ORDER BY 절은 메모리를 많이 잡아먹는 작업임
-    3)MIN,MAX값을 찾을때 연산속도가 매우빠름(정렬되어있기떄문)
+    3)MIN,MAX값을 찾을때 연산속도가 매우빠름(정렬 되어 있기 때문)
     
     [인덱스의 단점]
     
@@ -51,6 +51,7 @@ WHERE FIRST_NAME LIKE 'R%'; --OPTION RANGE SCAN CARDINALITY 25918 63
     3) 인덱스가 많을수록 저장공간을 잡아먹는다.
 
 */
+
 
 
 
