@@ -204,7 +204,7 @@ DECLARE
     ENAME EMPLOYEE.EMP_NAME%TYPE;
     DTITLE DEPARTMENT.DEPT_TITLE%TYPE;
     DCODE DEPARTMENT.DEPT_ID%TYPE;
-    NCODE KH.NATIONAL.NATIONAL_CODE%TYPE;
+    NCODE KH.NATIONAL.NATIONAL_CODE%TYPE; -- NATIONAL이 이미 오라클에서 사용하는 키워드라 에러가 난다
     TEAM VARCHAR2(10);
     -- 일반타입변수(TEAM 가변문자열(10))<=해외팀,국내팀
 
@@ -296,3 +296,349 @@ END IF;
 END;
 /
 SELECT * FROM EMPLOYEE;
+
+---4 CASE 비교대상자 WHEN 동등비교값1 THEN 결과값1 WHEN 동등비교값2 THEN 결과값2 ELSE 결과값 3 END; -> 
+DECLARE
+    EMP EMPLOYEE%ROWTYPE;
+    DNAME VARCHAR2(20);
+BEGIN
+    SELECT * INTO EMP
+    FROM EMPLOYEE
+    WHERE EMP_ID= &사번;
+    
+    DNAME := CASE EMP.DEPT_CODE
+                WHEN 'D1' THEN '인사팀'
+                WHEN 'D2' THEN '회계팀'
+                WHEN 'D3' THEN '마케팅팀'
+                WHEN 'D4' THEN '국내영업팀'
+                WHEN 'D9' THEN '총무팀'
+                ELSE '해외영업팀'
+            END;
+    DBMS_OUTPUT.PUT_LINE(EMP.EMP_NAME||'부서는'||DNAME||'입니다.');
+END;
+/
+
+-------------------------------------------------------------------------------
+--반복문
+/*
+    1) BASIC LOOP문
+    [표현식]
+    LOOP
+        반복적으로 실행할 구문;
+        
+        * 반복문을 빠져나갈수 있는 구문
+    END LOOP;
+    
+    * 반복문을 빠져나갈수 있는 구문 (2가지)
+    
+    1)IF 조건식 THEN EXIT; END IF;
+    2) EXIT WHEN 조건식;
+*/
+-- 1~5까지 순차적으로 1씩 증가하는 값을 출력.
+
+DECLARE
+    
+    I NUMBER:= 1;
+    
+BEGIN
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(I);
+        I := I+1;
+        
+        EXIT WHEN I=6;
+    END LOOP;
+END;
+/
+
+/*
+    2) FOR LOOP문
+    FOR 변수 IN 초기값 ... 최종값
+    LOOP
+        반복적으로 수행할 구문;
+        
+    END LOOP;
+*/
+BEGIN
+    FOR I IN 1..5
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(I);
+    END LOOP;
+END;
+/
+
+
+CREATE TABLE TEST (
+    TNO NUMBER PRIMARY KEY,
+    TDATE DATE
+);
+
+CREATE SEQUENCE SEQ_TNO
+    START WITH 1
+    INCREMENT BY 2
+    MAXVALUE 1000
+    NOCYCLE
+    NOCACHE;--시퀀스는 REPLACE가안됨
+    
+    
+BEGIN 
+    FOR I IN 1..500
+    LOOP
+        INSERT INTO TEST VALUES(SEQ_TNO.NEXTVAL,SYSDATE);
+    END LOOP;
+    
+    
+    
+END;
+/
+
+
+SELECT * FROM TEST;
+
+
+--3) WHELE LOOP문
+
+/*
+
+    [표현식]
+    WHILE 반복문이 수행될 조건
+    LOOP
+        내가실행할 구문
+    END LOOP;
+    
+*/
+DECLARE
+    I NUMBER:=1;
+    
+BEGIN
+    WHILE I<1000    
+    LOOP DBMS_OUTPUT.PUT_LINE(I);
+    I:=I+1;
+    END LOOP;
+END;
+/
+
+/*
+    예외처리부
+    실행중에 발생하는 오류를 오류
+    [표현식]
+    EXCEPTION
+        WHEN 예외명1 THEN 예외처리구문;
+        WHEN 예외명2 THEN 예외처리구문;
+        WHEN 예외명3 THEN 예외처리구문;
+        .....
+        WHEN OTERS THEN 예외처리구문
+        
+        * 시스템예외(오라클에서 미리정의해둔 예외 약20개)
+        --NO_DATA_FOUND: SELECT 한행도 없는경우
+        --TOO_MANY_ROWS: SELECT 결과가 여러행인경우
+        --ZERO_DIVIDE : 0으로 나눌떄
+        --DUP_VAL_ON_INDEX : UNIQUE 제약조건에 위배되었을때;
+*/
+--사용자가 입력한 수로 나눗셈 연산한 결과를 출력
+DECLARE
+    RESULT NUMBER;
+BEGIN
+    RESULT := 1000/&숫자;
+    DBMS_OUTPUT.PUT_LINE(RESULT);
+EXCEPTION
+    --WHEN ZERO_DIVIDE THEN DBMS_OUTPUT.PUT_LINE ('나누기 연산시 0을 사용할수 없습니다.');
+    WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE ('나누기 연산 오류');    
+END;
+/
+--UNIQUE 제약조건 위배.
+
+BEGIN UPDATE EMPLOYEE
+        SET EMP_ID=&사번
+        WHERE EMP_NAME='선동일';
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN DBMS_OUTPUT.PUT_LINE('이미 존재하는 사번입니다.');
+END;
+/
+
+DECLARE
+    EID EMPLOYEE.EMP_ID%TYPE;
+    ENAME EMPLOYEE.EMP_NAME%TYPE;
+     
+BEGIN
+    SELECT
+        EMP_ID,EMP_NAME
+        INTO EID,ENAME
+    FROM EMPLOYEE
+    WHERE MANAGER_ID=&사수사번;
+    
+    DBMS_OUTPUT.PUT_LINE('후임사번 : '||EID );
+    DBMS_OUTPUT.PUT_LINE('후임이름 : '||ENAME );
+EXCEPTION
+    WHEN TOO_MANY_ROWS THEN DBMS_OUTPUT.PUT_LINE('너무많 은행이 조회 되었습니다.');
+    WHEN NO_DATA_FOUND THEN DBMS_OUTPUT.PUT_LINE('데이터가 없습니다.');
+    WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('오류가 발생했습니다.');
+END;
+/
+--ORA-01422: exact fetch returns more than requested number of rows
+--> TOO_MANY_ROWS
+--ORA-06512: at line 6 01403. 00000 -  "no data found"
+-->NO_DATE_FOUND
+
+---------------------------------실습문제------------------------------------------
+--1) 사원의 연봉을 구하는 PL/SQL블럭 작성, 보너스가 있는 사원은 보너스도 포함하여 계산.
+-- 출력문 급여 사원이름 연봉 
+--NVL버전
+DECLARE
+    ENAME EMPLOYEE.EMP_NAME%TYPE;
+    SAL EMPLOYEE.EMP_NAME%TYPE;
+    YSAL NUMBER;
+BEGIN
+    SELECT EMP_NAME,SALARY,SALARY*(NVL(BONUS,0)+1)*12 AS 연봉
+        INTO ENAME,SAL,YSAL
+    FROM EMPLOYEE
+    WHERE EMP_ID=&사번;
+    
+    DBMS_OUTPUT.PUT_LINE('사원명 '||ENAME);
+    DBMS_OUTPUT.PUT_LINE('월급 '||SAL);
+    DBMS_OUTPUT.PUT_LINE('연봉 '||YSAL);
+    
+    
+END;
+/
+--조건문 버전
+    DECLARE
+    ENAME EMPLOYEE.EMP_NAME%TYPE;
+    SAL EMPLOYEE.EMP_NAME%TYPE;
+    BNS EMPLOYEE.BONUS%TYPE;
+    YSAL NUMBER;
+BEGIN
+    SELECT EMP_NAME,SALARY,BONUS
+        INTO ENAME,SAL,BNS
+    FROM EMPLOYEE
+    WHERE EMP_ID=&사번;
+    
+    IF BNS IS NULL THEN YSAL := 12*SAL;
+        ELSE YSAL := SAL*12*(1+BNS);
+        END IF;
+    
+    DBMS_OUTPUT.PUT_LINE('사원명 '||ENAME);
+    DBMS_OUTPUT.PUT_LINE('월급 '||SAL);
+    DBMS_OUTPUT.PUT_LINE('연봉 '||YSAL);    
+END;
+/
+--2) 구구단 짝수단 출력
+--2-1) FOR LOOP 이용
+BEGIN
+FOR J IN 2..9 
+    LOOP
+    IF MOD(J,2)=0 THEN
+        DBMS_OUTPUT.PUT_LINE(J||'단');
+        FOR I IN 1..9
+            LOOP
+            DBMS_OUTPUT.PUT_LINE(J||'*'||I||'='||I*J);
+            END LOOP;
+            
+        END IF;
+END LOOP;
+END;
+/
+    
+--2-2) WHILE LOOP 사용
+DECLARE
+    I NUMBER :=2 ;
+    J NUMBER :=1;
+BEGIN
+    WHILE I<10
+        LOOP
+            IF MOD(I,2)=0
+                THEN
+                WHILE J<10
+                    LOOP
+                        DBMS_OUTPUT.PUT_LINE(I||'*'||J||'='||I*J);
+                        J:=J+1;
+                    END LOOP;
+                    
+                J:=1;
+            END IF;
+            I:=I+1;
+        END LOOP ;
+END;
+/
+
+-- 단수 변수를 따로 선언해서 사용
+DECLARE 
+    INUM NUMBER:=2;
+BEGIN
+FOR J IN 1..4 
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(INUM||'단');
+        FOR I IN 1..9
+            LOOP
+            DBMS_OUTPUT.PUT_LINE(INUM||'*'||I||'='||I*INUM);
+            END LOOP;      
+        DBMS_OUTPUT.PUT_LINE('');
+    INUM:=INUM+2;
+END LOOP;
+END;
+/
+
+--EXIT 활용 해보기
+DECLARE 
+    INUM NUMBER:=2;
+BEGIN
+
+FOR J IN 1..4 
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(INUM||'단');
+        FOR I IN 1..9
+            LOOP
+            DBMS_OUTPUT.PUT_LINE(INUM||'*'||I||'='||I*INUM);
+            EXIT WHEN INUM*I=12;
+            END LOOP;
+            
+        DBMS_OUTPUT.PUT_LINE('');
+    INUM:=INUM+2;
+END LOOP;
+END;
+/
+--라벨을 이용한 중첩 루프문 빠저나오기 
+DECLARE 
+    INUM NUMBER:=2;
+BEGIN
+<<LOOP_FOR>>
+FOR J IN 1..4 
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(INUM||'단');
+        FOR I IN 1..9
+            LOOP
+            DBMS_OUTPUT.PUT_LINE(INUM||'*'||I||'='||I*INUM);
+            EXIT LOOP_FOR WHEN INUM*I=64;
+            END LOOP;
+            
+        DBMS_OUTPUT.PUT_LINE('');
+    INUM:=INUM+2;
+END LOOP;
+END;
+/
+
+
+--CONTINUE 활용 값 걸러내기;
+BEGIN
+FOR J IN 2..9 
+    LOOP
+    IF MOD(J,2)=1 THEN
+    CONTINUE;
+    END IF;
+        DBMS_OUTPUT.PUT_LINE(J||'단');
+        FOR I IN 1..9
+            LOOP
+                DBMS_OUTPUT.PUT_LINE(J||'*'||I||'='||I*J);
+            END LOOP;
+    END LOOP;
+END;
+/
+
+
+SELECT
+    EMP_NAME,
+    EMP_ID,
+    SUM(SALARY) OVER (PARTITION BY DEPT_CODE)
+FROM EMPLOYEE
+
+-- PARTITION BY 를 이용하면
+-- 서브쿼리를 사용하지 않아 깔끔하다.
